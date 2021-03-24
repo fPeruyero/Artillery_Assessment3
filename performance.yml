@@ -1,0 +1,57 @@
+config:
+  target: "https://api.todoist.com"
+  #Create (arrivalRate) virtual user every second for (duration) seconds 
+  phases:
+    - duration: 10
+      arrivalRate: 5
+      name: "min"
+    - duration: 30
+      arrivalRate: 15
+      name: "max"
+    - duration: 18
+      arrivalRate: 9
+      name: "mid"
+  defaults:
+    headers: 
+      Authorization: Bearer {{ $processEnvironment.TOKEN }}
+      Content-type: application/json
+  plugins:
+    faker:
+      locale: en
+  variables:
+    content: "$faker.lorem.sentence"
+scenarios:
+  - flow:
+      #Get active tasks
+      - get: 
+          url: "/rest/v1/tasks"
+      #Create a new task    
+      - post:
+          url: "/rest/v1/tasks"
+          json:
+            content: "{{ content }}"
+          capture:
+            json: "$.id"
+            as: "id"
+      #Print ID and generated data (task content) on the console
+      - log: "Current id is {{ id }}"
+      - log: "Current task content is {{ content }}"
+      #Get an active task
+      - get: 
+          url: "/rest/v1/tasks/{{ id }}"
+      #Update a task
+      - post:
+          url: "/rest/v1/tasks/{{ id }}"
+          json:
+            content: "{{ content }}"
+      #Change a task status to "Complete"
+      - post:
+          url: "/rest/v1/tasks/{{ id }}/close"
+          json:
+      #Reopen a task
+      - post:
+          url: "/rest/v1/tasks/{{ id }}/reopen"
+          json:
+      #Delete a task
+      - delete:
+          url: "/rest/v1/projects/{{ id }}"
